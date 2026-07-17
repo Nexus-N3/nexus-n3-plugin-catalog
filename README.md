@@ -1,8 +1,8 @@
 # nexus-n3-plugin-catalog
 
-User-facing catalog of RS Nexus sensor and algorithm plugins.
+User-facing catalog of Nexus N3 sensor and algorithm plugins.
 
-This repository is the shared plugin workspace for Nexus N3 systems. It keeps plugin source repositories in one place, alongside optional built `.rsnxplugin` bundles that can be installed into `rs-nexus-os`.
+This repository is the shared plugin workspace for Nexus N3 systems. It keeps plugin source repositories in one place, alongside optional built `.rsnxplugin` bundles created locally during development and release workflows.
 
 ## What This Repository Is For
 
@@ -16,16 +16,20 @@ Use this repository when you want to:
 
 This repository is not the plugin CLI itself, and it is not the runtime host.
 
+Nexus N3 plugins can be developed, tested, and bundled publicly from this repository together with `rs-nexus-plugin-tooling`.
+
+Deployment and runtime installation are currently provided separately.
+
 Related repositories:
 
 - `rs-nexus-plugin-tooling`
   Provides the `rsnexus-plugin` CLI, SDK, scaffolding, validation, and bundle build workflow.
 - `rs-nexus-os`
-  Provides plugin installation, plugin discovery, and runtime execution.
+  Provides separately managed runtime installation, plugin discovery, and runtime execution.
 
 ## Repository Layout
 
-The catalog is organized into three top-level areas:
+The catalog is organized around source areas for plugins, plus an optional local build output area:
 
 ```text
 nexus-n3-plugin-catalog/
@@ -43,7 +47,7 @@ Meaning:
 - `algorithms/`
   Source repositories for algorithm plugins.
 - `plugin-builds/`
-  Built `.rsnxplugin` bundles produced from plugin source trees.
+  Local build output for `.rsnxplugin` bundles produced from plugin source trees. This directory is typically created during development and is usually not committed.
 
 ## Current Contents
 
@@ -61,7 +65,7 @@ The most common workflow looks like this:
 1. Install and activate `rs-nexus-plugin-tooling`
 2. Work inside a plugin source tree under `sensors/` or `algorithms/`
 3. Build a `.rsnxplugin` bundle into `plugin-builds/`
-4. Install that bundle into `rs-nexus-os`
+4. Install that bundle into the runtime environment
 5. Test the plugin in the runtime
 
 In practice:
@@ -70,7 +74,7 @@ In practice:
 Edit plugin source here
 -> build with rsnexus-plugin
 -> bundle appears under plugin-builds/
--> install bundle into rs-nexus-os
+-> install bundle into the runtime
 -> run and validate
 ```
 
@@ -150,9 +154,11 @@ rsnexus-plugin build \
   --output-dir /path/to/nexus-n3-plugin-catalog/plugin-builds/algorithms
 ```
 
-## Using Bundles With rs-nexus-os
+## Using Bundles With The Runtime
 
-Once a bundle is built, install it into `rs-nexus-os` using the runtime-side plugin installer.
+Once a bundle is built, install it into the runtime environment using the runtime-side plugin installer.
+
+Today that runtime integration is provided separately through `rs-nexus-os`.
 
 Typical examples:
 
@@ -166,7 +172,7 @@ python -m rs_nexus_plugins install \
   /path/to/nexus-n3-plugin-catalog/plugin-builds/algorithms/your-algorithm-plugin.rsnxplugin
 ```
 
-`rs-nexus-os` can also be configured to prepare plugins directly from this catalog during development workflows.
+`rs-nexus-os` can also be configured separately to prepare plugins directly from this catalog during development workflows.
 
 ## Creating New Plugins
 
@@ -215,15 +221,15 @@ Recommended local workspace:
 ```text
 <workspace>/
   rs-nexus-plugin-tooling/
-  rs-nexus-os/
   nexus-n3-plugin-catalog/
 ```
 
 This keeps:
 
 - authoring and build tools in `rs-nexus-plugin-tooling`
-- runtime installation and execution in `rs-nexus-os`
 - plugin source repositories and bundles in `nexus-n3-plugin-catalog`
+
+If you also work with the separately provided runtime, a larger internal workspace may additionally include `rs-nexus-os`.
 
 ## Contributing
 
@@ -238,4 +244,4 @@ When contributing to this repository:
 ## See Also
 
 - `rs-nexus-plugin-tooling` for scaffolding, validation, and bundle builds
-- `rs-nexus-os` for plugin installation and runtime execution
+- `rs-nexus-os` for separately provided runtime installation and execution
