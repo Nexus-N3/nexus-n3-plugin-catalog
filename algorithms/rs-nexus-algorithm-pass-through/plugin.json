@@ -1,0 +1,15 @@
+{
+  "plugin_id": "pass-through",
+  "plugin_type": "algorithm",
+  "display_name": "Pass Through",
+  "version": "0.1.0",
+  "package_name": "rs-nexus-algorithm-pass-through",
+  "python_package": "pass_through",
+  "entry_point": "pass_through.core:PassThroughAlgorithm",
+  "config_path": "pass_through/config.yaml",
+  "sdk_version": "0.1.0",
+  "min_rs_nexus_os_version": "0.0.0",
+  "algorithm_name": "pass_through",
+  "supports_intermediate": false,
+  "supports_consolidation": false
+}

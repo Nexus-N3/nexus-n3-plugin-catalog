@@ -1,0 +1,30 @@
+algorithm:
+  name: generic_data_summary
+  version: 1.0
+  description: >
+    Computes basic summary statistics (min, max, mean, std and rms) for numeric fields
+    emitted by sensor samples over a fixed window.
+  compute:
+    delegate: true
+
+inputs:
+  sensors:
+    data_type: any
+
+standards:
+  window_seconds: 5
+
+  output:
+    include_components: true
+    include_magnitude: true
+    magnitude_fields_only_for:
+      - 3
+      - 4
+    exclude_fields:
+      - quat
+
+schedules:
+  real_time:
+    enabled: true
+    trigger: window_complete
+    emit_on_every_window: true

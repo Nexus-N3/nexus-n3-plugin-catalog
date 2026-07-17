@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rs-nexus-algorithm-standard-loading-intensity"
+version = "0.1.0"
+description = "Standard Loading Intensity algorithm plugin for RS Nexus OS"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "rs-nexus-plugin-sdk>=0.1.0",
+  "numpy>=1.24",
+  "scipy>=1.10",
+]
+
+[project.entry-points."rs_nexus.algorithms"]
+standard_loading_intensity = "standard_loading_intensity.core:StandardLoadingIntensityAlgorithm"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+standard_loading_intensity = ["*.yaml", "plugin.json"]

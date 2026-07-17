@@ -1,0 +1,50 @@
+sensor:
+  name: "Movesense"
+  type: "movesense"
+  adapter: "BLE"
+
+capabilities: []
+
+events:
+  - on_data
+  - on_error
+
+attributes:
+  SAMPLING_RATE:
+    default: 200
+    supported: [200]
+    unit: "Hz"
+  ECG_PATH_SUFFIX:
+    default: "mv"
+    supported: ["mv", "mV", ""]
+  STREAMS:
+    default: ["ECG", "HR"]
+    supported: ["ECG", "HR", "TEMP"]
+
+data_streams:
+  ecg:
+    sample_type: ECGSample
+  hr:
+    sample_type: HRSample
+  temp:
+    sample_type: TempSample
+
+locations:
+  supported:
+    - CHEST
+
+computations:
+  - ecg_rhythm_metrics
+
+transport:
+  BLE:
+    standard_hr: false
+    services:
+      write:
+        uuid: "34800001-7185-4d5d-b431-630e7050e8f0"
+        stream_ids:
+          ecg: 100
+          hr: 1
+          temp: 2
+      notify:
+        uuid: "34800002-7185-4d5d-b431-630e7050e8f0"

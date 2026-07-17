@@ -1,0 +1,15 @@
+{
+  "plugin_id": "generic-data-summary",
+  "plugin_type": "algorithm",
+  "display_name": "Generic Data Summary",
+  "version": "0.1.0",
+  "package_name": "rs-nexus-algorithm-generic-data-summary",
+  "python_package": "generic_data_summary",
+  "entry_point": "generic_data_summary.core:GenericDataSummaryAlgorithm",
+  "config_path": "generic_data_summary/config.yaml",
+  "sdk_version": "0.1.0",
+  "min_rs_nexus_os_version": "0.0.0",
+  "algorithm_name": "generic_data_summary",
+  "supports_intermediate": false,
+  "supports_consolidation": false
+}

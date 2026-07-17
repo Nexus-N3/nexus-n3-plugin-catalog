@@ -1,0 +1,7 @@
+algorithm:
+  name: "pass_through"
+
+inputs:
+  parameters:
+    buffer_seconds: 5
+    max_interval_ms: 5000

@@ -1,0 +1,18 @@
+{
+  "plugin_id": "ecg-rhythm",
+  "plugin_type": "algorithm",
+  "display_name": "ECG Rhythm Metrics",
+  "version": "0.1.1",
+  "package_name": "rs-nexus-algorithm-ecg-rhythm",
+  "python_package": "ecg_rhythm",
+  "entry_point": "ecg_rhythm.core:ECGRhythmMetricsAlgorithm",
+  "executor_entry_points": {
+    "intermediate": "ecg_rhythm.intermediate_executor:ECGRhythmIntermediateExecutor"
+  },
+  "config_path": "ecg_rhythm/config.yaml",
+  "sdk_version": "0.1.0",
+  "min_rs_nexus_os_version": "0.0.0",
+  "algorithm_name": "ecg_rhythm_metrics",
+  "supports_intermediate": true,
+  "supports_consolidation": false
+}

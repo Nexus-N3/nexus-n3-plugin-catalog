@@ -1,0 +1,19 @@
+{
+  "plugin_id": "standard-loading-intensity",
+  "plugin_type": "algorithm",
+  "display_name": "Standard Loading Intensity",
+  "version": "0.1.0",
+  "package_name": "rs-nexus-algorithm-standard-loading-intensity",
+  "python_package": "standard_loading_intensity",
+  "entry_point": "standard_loading_intensity.core:StandardLoadingIntensityAlgorithm",
+  "executor_entry_points": {
+    "intermediate": "standard_loading_intensity.intermediate_executor:LoadingIntensityIntermediateExecutor",
+    "consolidation": "standard_loading_intensity.consolidation_executor:LoadingIntensityConsolidationExecutor"
+  },
+  "config_path": "standard_loading_intensity/config.yaml",
+  "sdk_version": "0.1.0",
+  "min_rs_nexus_os_version": "0.0.0",
+  "algorithm_name": "standard_loading_intensity",
+  "supports_intermediate": true,
+  "supports_consolidation": true
+}

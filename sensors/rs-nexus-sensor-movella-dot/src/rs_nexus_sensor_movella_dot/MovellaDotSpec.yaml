@@ -1,0 +1,75 @@
+sensor:
+  name: "Movella DOT"
+  type: "movelladot"
+  adapter: "BLE"
+
+capabilities:
+  - identify
+  - button
+  - notify_battery
+  - set_data_rate
+  - set_payload
+
+events:
+  - on_data
+  - on_button
+  - on_battery
+  - on_disconnected
+  - on_identify
+  - on_error
+
+attributes:
+  SAMPLING_RATE:
+    default: 60
+    supported: [20, 60]
+    unit: "Hz"
+
+  PAYLOAD:
+    default: CUSTOM_PAYLOAD_5
+
+locations:
+  supported:
+    - HEAD
+    - LOWER_BACK
+    - LEFT_ANKLE
+    - RIGHT_ANKLE
+    - LEFT_THIGH
+    - RIGH_THIGH
+    - CHEST
+    - UPPER_BACK
+
+computations:
+  - standard_loading_intensity
+  - generic_data_summary
+
+data_streams:
+  imu:
+    sample_type: IMUSample
+
+transport:
+  BLE:
+    services:
+      battery:
+        uuid: "15173001-4947-11e9-8646-d663bd873d93"
+
+      device_control:
+        uuid: "15171002-4947-11e9-8646-d663bd873d93"
+        commands:
+          identify: "010102"
+          set_data_rate:
+            20: "100000000000000B4D6F76656C6C6120444F5400000000001400000000000000"
+            60: "100000000000000B4D6F76656C6C6120444F5400000000003C00000000000000"
+
+      device_report:
+        uuid: "15171004-4947-11e9-8646-d663bd873d93"
+
+      measurement:
+        uuid: "15172001-4947-11e9-8646-d663bd873d93"
+        commands:
+          start: "01011A"
+          stop: "01001A"
+
+    payload_size:
+      short: "15172004-4947-11e9-8646-d663bd873d93"
+      medium: "15172003-4947-11e9-8646-d663bd873d93"
+      long: "15172002-4947-11e9-8646-d663bd873d93"

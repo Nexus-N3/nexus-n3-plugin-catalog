@@ -1,0 +1,103 @@
+algorithm:
+  name: ecg_rhythm_metrics
+  version: 1.0
+  description: >
+    Computes ECG rhythm features (HR, RR irregularity, ectopy suspicion) from
+    single-lead ECG samples. Includes SQI gating and intermediate persistence logic.
+  compute:
+    delegate: true
+
+inputs:
+  sensors:
+    data_type: ecg
+
+standards:
+  window_seconds: 10
+
+  pre_filter:
+    enabled: true
+    type: bandpass
+    low_cutoff_hz: 0.5
+    high_cutoff_hz: 40
+    order: 4
+
+  detrend:
+    enabled: true
+    type: moving_average
+    window_seconds: 0.8
+
+  rpeak_detector:
+    enabled: true
+    method: derivative_energy_threshold
+    qrs_smooth_ms: 100
+    refractory_ms: 250
+    threshold:
+      mode: adaptive
+      k: 3.0
+
+  physiology_limits:
+    hr_bpm:
+      min: 30
+      max: 220
+
+  ectopy:
+    enabled: true
+    short_rr_ratio: 0.75
+    long_rr_ratio: 1.20
+
+  sqi:
+    enabled: true
+    beats_required:
+      min_beats_per_window: 4
+      max_beats_per_window: 40
+
+    missing_samples:
+      enabled: true
+      # minimum fraction of samples that must have non-None voltage
+      min_fraction_present: 0.9
+
+    clipping:
+      enabled: false
+      near_rail_fraction: 0.01
+      # If you enable clipping, also set:
+      # rail_min: -32768
+      # rail_max: 32767
+
+schedules:
+  real_time:
+    enabled: true
+    trigger: window_complete
+    emit_on_every_window: true
+
+  intermediate:
+    enabled: true
+    period_seconds: 10
+    persistence:
+      lookback_windows: 6
+      min_good_sqi_windows: 4
+    episode_rules:
+      af_suspected:
+        enabled: true
+        cvrr_threshold: 0.10
+        rmssd_threshold_ms: 50
+        min_windows_meeting_rule: 4
+      bradycardia:
+        enabled: true
+        hr_threshold_bpm: 50
+        min_windows: 3
+      tachycardia:
+        enabled: true
+        hr_threshold_bpm: 120
+        min_windows: 3
+
+  consolidated:
+    enabled: false
+    trigger: stop_event
+    source: real_time_results
+    aggregation:
+      method: summary
+      metrics:
+        - mean
+        - median
+        - peak
+        - count_valid

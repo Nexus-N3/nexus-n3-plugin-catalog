@@ -1,0 +1,69 @@
+algorithm:
+  name: standard_loading_intensity
+  version: 1.0
+  description: >
+    Computes loading intensity from Accleration data using a fixed-time window.
+    Designed to operate in real-time, intermediate, and consolidated modes.
+  compute:
+    delegate: true
+
+# =========================
+# Inputs
+# =========================
+inputs:
+  sensors:
+    data_type: imu_sample
+
+  parameters:
+    gravity: 9.80665
+    gravity_option: earth
+    gravity_options:
+      earth: 9.80665
+      moon: 1.62
+      mars: 3.721
+      zero_g: 0.0
+
+# =========================
+# Standards (fixed behaviour)
+# =========================
+standards:
+  window_seconds: 5
+  pre_filter:
+      enabled: true
+      type: bandpass
+      low_cutoff_hz: 0.1
+      high_cutoff_hz: 20
+      order: 4
+
+  frequency_bands:
+    - [0, 3]
+    - [3, 6]
+    - [6, 10]
+    - [0, 6]
+
+# =========================
+# Schedules
+# =========================
+schedules:
+
+  real_time:
+    enabled: true
+    trigger: window_complete
+    emit_on_every_window: true
+
+  intermediate:
+    enabled: true
+    period_seconds: 30  # test scheduler in test plan test of 60 seconds streaming
+    comparisons:
+      - [RIGHT_ANKLE, LEFT_ANKLE]
+
+  consolidated:
+    enabled: true
+    trigger: stop_event
+    source: real_time_results
+    aggregation:
+      method: summary
+      metrics:
+        - mean
+        - peak
+        - cumulative

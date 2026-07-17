@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rs-nexus-algorithm-ecg-rhythm"
+version = "0.1.1"
+description = "ECG rhythm metrics algorithm plugin for RS Nexus OS"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "rs-nexus-plugin-sdk>=0.1.0",
+  "numpy>=1.24",
+  "scipy>=1.10",
+]
+
+[project.entry-points."rs_nexus.algorithms"]
+ecg_rhythm = "ecg_rhythm.core:ECGRhythmMetricsAlgorithm"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ecg_rhythm = ["*.yaml", "plugin.json"]
