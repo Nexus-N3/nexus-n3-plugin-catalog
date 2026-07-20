@@ -16,15 +16,15 @@ Use this repository when you want to:
 
 This repository is not the plugin CLI itself, and it is not the runtime host.
 
-Nexus N3 plugins can be developed, tested, and bundled publicly from this repository together with `rs-nexus-plugin-tooling`.
+Nexus N3 plugins can be developed, tested, and bundled publicly from this repository together with `nexus-n3-plugin-tooling`.
 
 Deployment and runtime installation are currently provided separately.
 
 Related repositories:
 
-- `rs-nexus-plugin-tooling`
-  Provides the `rsnexus-plugin` CLI, SDK, scaffolding, validation, and bundle build workflow.
-- `rs-nexus-os`
+- `nexus-n3-plugin-tooling`
+  Provides the `nexus-n3-plugin` CLI, SDK, scaffolding, validation, and bundle build workflow.
+- `nexus-n3-core`
   Provides separately managed runtime installation, plugin discovery, and runtime execution.
 
 ## Repository Layout
@@ -62,7 +62,7 @@ The exact contents will evolve as plugins are added, removed, or promoted.
 
 The most common workflow looks like this:
 
-1. Install and activate `rs-nexus-plugin-tooling`
+1. Install and activate `nexus-n3-plugin-tooling`
 2. Work inside a plugin source tree under `sensors/` or `algorithms/`
 3. Build a `.rsnxplugin` bundle into `plugin-builds/`
 4. Install that bundle into the runtime environment
@@ -72,7 +72,7 @@ In practice:
 
 ```text
 Edit plugin source here
--> build with rsnexus-plugin
+-> build with nexus-n3-plugin
 -> bundle appears under plugin-builds/
 -> install bundle into the runtime
 -> run and validate
@@ -89,7 +89,7 @@ sensors/<plugin-repo>/
 Example:
 
 ```text
-sensors/rs-nexus-sensor-movesense/
+sensors/nexus-n3-sensor-movesense/
 ```
 
 A sensor plugin repository typically contains:
@@ -111,7 +111,7 @@ algorithms/<plugin-repo>/
 Example:
 
 ```text
-algorithms/rs-nexus-algorithm-standard-loading-intensity/
+algorithms/nexus-n3-algorithm-standard-loading-intensity/
 ```
 
 An algorithm plugin repository typically contains:
@@ -134,23 +134,23 @@ plugin-builds/algorithms/
 Examples:
 
 ```text
-plugin-builds/sensors/rs-nexus-sensor-movesense-0.1.2.rsnxplugin
-plugin-builds/algorithms/rs-nexus-algorithm-standard-loading-intensity-0.1.0.rsnxplugin
+plugin-builds/sensors/nexus-n3-sensor-movesense-0.1.2.rsnxplugin
+plugin-builds/algorithms/nexus-n3-algorithm-standard-loading-intensity-0.1.0.rsnxplugin
 ```
 
-Bundle creation is handled by `rs-nexus-plugin-tooling`, not by this repository directly.
+Bundle creation is handled by `nexus-n3-plugin-tooling`, not by this repository directly.
 
 Typical bundle build commands look like:
 
 ```bash
-rsnexus-plugin build \
-  --plugin-root /path/to/nexus-n3-plugin-catalog/sensors/rs-nexus-sensor-movesense \
+nexus-n3-plugin build \
+  --plugin-root /path/to/nexus-n3-plugin-catalog/sensors/nexus-n3-sensor-movesense \
   --output-dir /path/to/nexus-n3-plugin-catalog/plugin-builds/sensors
 ```
 
 ```bash
-rsnexus-plugin build \
-  --plugin-root /path/to/nexus-n3-plugin-catalog/algorithms/rs-nexus-algorithm-standard-loading-intensity \
+nexus-n3-plugin build \
+  --plugin-root /path/to/nexus-n3-plugin-catalog/algorithms/nexus-n3-algorithm-standard-loading-intensity \
   --output-dir /path/to/nexus-n3-plugin-catalog/plugin-builds/algorithms
 ```
 
@@ -158,35 +158,35 @@ rsnexus-plugin build \
 
 Once a bundle is built, install it into the runtime environment using the runtime-side plugin installer.
 
-Today that runtime integration is provided separately through `rs-nexus-os`.
+Today that runtime integration is provided separately through `nexus-n3-core`.
 
 Typical examples:
 
 ```bash
-python -m rs_nexus_plugins install \
+python -m nexus_n3.plugins install \
   /path/to/nexus-n3-plugin-catalog/plugin-builds/sensors/your-sensor-plugin.rsnxplugin
 ```
 
 ```bash
-python -m rs_nexus_plugins install \
+python -m nexus_n3.plugins install \
   /path/to/nexus-n3-plugin-catalog/plugin-builds/algorithms/your-algorithm-plugin.rsnxplugin
 ```
 
-`rs-nexus-os` can also be configured separately to prepare plugins directly from this catalog during development workflows.
+`nexus-n3-core` can also be configured separately to prepare plugins directly from this catalog during development workflows.
 
 ## Creating New Plugins
 
-New plugins are usually scaffolded from `rs-nexus-plugin-tooling`.
+New plugins are usually scaffolded from `nexus-n3-plugin-tooling`.
 
 Examples:
 
 ```bash
-rsnexus-plugin init sensor your-sensor-id \
+nexus-n3-plugin init sensor your-sensor-id \
   --output-dir /path/to/nexus-n3-plugin-catalog
 ```
 
 ```bash
-rsnexus-plugin init algorithm your-algorithm-id \
+nexus-n3-plugin init algorithm your-algorithm-id \
   --output-dir /path/to/nexus-n3-plugin-catalog
 ```
 
@@ -220,16 +220,16 @@ Recommended local workspace:
 
 ```text
 <workspace>/
-  rs-nexus-plugin-tooling/
+  nexus-n3-plugin-tooling/
   nexus-n3-plugin-catalog/
 ```
 
 This keeps:
 
-- authoring and build tools in `rs-nexus-plugin-tooling`
+- authoring and build tools in `nexus-n3-plugin-tooling`
 - plugin source repositories and bundles in `nexus-n3-plugin-catalog`
 
-If you also work with the separately provided runtime, a larger internal workspace may additionally include `rs-nexus-os`.
+If you also work with the separately provided runtime, a larger internal workspace may additionally include `nexus-n3-core`.
 
 ## Contributing
 
@@ -243,5 +243,5 @@ When contributing to this repository:
 
 ## See Also
 
-- `rs-nexus-plugin-tooling` for scaffolding, validation, and bundle builds
-- `rs-nexus-os` for separately provided runtime installation and execution
+- `nexus-n3-plugin-tooling` for scaffolding, validation, and bundle builds
+- `nexus-n3-core` for separately provided runtime installation and execution

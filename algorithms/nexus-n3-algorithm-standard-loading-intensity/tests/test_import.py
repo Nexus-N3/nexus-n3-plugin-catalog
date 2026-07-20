@@ -1,0 +1,11 @@
+from standard_loading_intensity.core import StandardLoadingIntensityAlgorithm
+from standard_loading_intensity.intermediate_executor import LoadingIntensityIntermediateExecutor
+from standard_loading_intensity.consolidation_executor import LoadingIntensityConsolidationExecutor
+from nexus_n3_plugin_sdk import AlgorithmBase
+from nexus_n3_plugin_sdk import ExecutorBase
+
+
+def test_generated_classes_match_sdk_contracts() -> None:
+    assert issubclass(StandardLoadingIntensityAlgorithm, AlgorithmBase)
+    assert issubclass(LoadingIntensityIntermediateExecutor, ExecutorBase)
+    assert issubclass(LoadingIntensityConsolidationExecutor, ExecutorBase)

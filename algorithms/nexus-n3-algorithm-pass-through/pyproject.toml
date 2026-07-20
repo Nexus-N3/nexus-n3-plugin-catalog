@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexus-n3-algorithm-pass-through"
+version = "0.1.0"
+description = "Pass-through algorithm plugin for Nexus N3 OS"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "nexus-n3-plugin-sdk>=0.1.0",
+]
+
+[project.entry-points."nexus_n3.algorithms"]
+pass_through = "pass_through.core:PassThroughAlgorithm"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pass_through = ["*.yaml", "plugin.json"]
