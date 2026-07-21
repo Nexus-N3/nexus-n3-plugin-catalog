@@ -16,9 +16,6 @@ python -m build
 nexus-n3-plugin build --plugin-root . --output-dir build
 ```
 
-For an offline-complete `.rsnxplugin`, include any dependency wheels that are
-not bundled automatically, for example `numpy`.
-
 ## Notes
 
 - Generated from `nexus-n3-plugin init sensor`, then migrated from the in-tree sensor

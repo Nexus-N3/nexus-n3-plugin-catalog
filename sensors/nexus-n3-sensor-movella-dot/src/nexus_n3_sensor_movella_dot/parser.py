@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
+import struct
 from typing import Optional
-
-import numpy as np
 
 from nexus_n3_plugin_sdk.samples import IMUSample
 
@@ -12,47 +11,47 @@ from nexus_n3_plugin_sdk.samples import IMUSample
 class MovellaDotParser:
     """Parse raw Movella DOT BLE packets into `IMUSample` objects."""
 
+    _SAMPLE_PREFIX = struct.Struct("<I10f")
+
     @staticmethod
     def parse_packet(packet: bytes) -> IMUSample:
-        dtype = np.dtype(
-            [
-                ("timestamp", np.uint32),
-                ("q_w", np.float32),
-                ("q_x", np.float32),
-                ("q_y", np.float32),
-                ("q_z", np.float32),
-                ("acc_x", np.float32),
-                ("acc_y", np.float32),
-                ("acc_z", np.float32),
-                ("gyr_x", np.float32),
-                ("gyr_y", np.float32),
-                ("gyr_z", np.float32),
-                ("_pad0", np.int64),
-                ("_pad1", np.int64),
-                ("_pad2", np.int16),
-                ("_pad3", np.int8),
-            ]
-        )
+        if len(packet) < MovellaDotParser._SAMPLE_PREFIX.size:
+            raise ValueError(
+                f"packet too short: expected at least {MovellaDotParser._SAMPLE_PREFIX.size} bytes, "
+                f"got {len(packet)}"
+            )
 
-        row = np.frombuffer(packet, dtype=dtype)[0]
+        (
+            timestamp,
+            q_w,
+            q_x,
+            q_y,
+            q_z,
+            acc_x,
+            acc_y,
+            acc_z,
+            gyr_x,
+            gyr_y,
+            gyr_z,
+        ) = MovellaDotParser._SAMPLE_PREFIX.unpack_from(packet)
 
         return IMUSample(
-            timestamp=int(row["timestamp"]),
+            timestamp=int(timestamp),
             quat=(
-                float(row["q_w"]),
-                float(row["q_x"]),
-                float(row["q_y"]),
-                float(row["q_z"]),
+                float(q_w),
+                float(q_x),
+                float(q_y),
+                float(q_z),
             ),
             accel=(
-                float(row["acc_x"]),
-                float(row["acc_y"]),
-                float(row["acc_z"]),
+                float(acc_x),
+                float(acc_y),
+                float(acc_z),
             ),
             gyro=(
-                float(row["gyr_x"]),
-                float(row["gyr_y"]),
-                float(row["gyr_z"]),
+                float(gyr_x),
+                float(gyr_y),
+                float(gyr_z),
             ),
             sensor_type=None,
             address=None,

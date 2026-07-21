@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import logging
 
-import numpy as np
-
 from nexus_n3_plugin_sdk import BatteryStatus, SensorBase, SensorType
 from nexus_n3_plugin_sdk.samples import IMUSample
 
@@ -147,8 +145,10 @@ class MovellaDotSensor(SensorBase):
 
     def battery_status(self, batt_bytes: bytes) -> BatteryStatus:
         """Convert raw battery bytes into a battery status model."""
-        segments = np.dtype([("level", np.int8), ("charging", np.int8)])
-        level, charging = np.frombuffer(batt_bytes, dtype=segments)[0]
+        if len(batt_bytes) < 2:
+            raise ValueError(f"battery payload too short: expected 2 bytes, got {len(batt_bytes)}")
+        level = int.from_bytes(batt_bytes[0:1], byteorder="little", signed=True)
+        charging = int.from_bytes(batt_bytes[1:2], byteorder="little", signed=True)
         return BatteryStatus(level, bool(charging))
 
     def on_battery(self, sender, batt_bytes: bytes):

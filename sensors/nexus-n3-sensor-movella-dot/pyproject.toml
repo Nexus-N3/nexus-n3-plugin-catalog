@@ -10,7 +10,6 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
   "nexus-n3-plugin-sdk>=0.1.0",
-  "numpy>=1.24",
 ]
 
 [project.entry-points."nexus_n3.sensors"]
