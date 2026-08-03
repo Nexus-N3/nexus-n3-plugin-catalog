@@ -2,7 +2,7 @@
   "plugin_id": "standard-loading-intensity",
   "plugin_type": "algorithm",
   "display_name": "Standard Loading Intensity",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "package_name": "nexus-n3-algorithm-standard-loading-intensity",
   "python_package": "standard_loading_intensity",
   "entry_point": "standard_loading_intensity.core:StandardLoadingIntensityAlgorithm",

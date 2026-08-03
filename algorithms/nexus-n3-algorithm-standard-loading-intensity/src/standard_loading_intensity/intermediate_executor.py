@@ -1,5 +1,6 @@
 """Intermediate executor for loading intensity aggregation."""
 
+from collections.abc import Mapping
 from pathlib import Path
 
 from nexus_n3_plugin_sdk import ExecutorBase, build_intermediate_result
@@ -8,6 +9,16 @@ from nexus_n3_plugin_sdk.yaml_loader import load_yaml
 from .core_schema import (
     ComputeStage
 )
+
+
+def _items(value):
+    """Return items from JSON mappings reconstructed by the plugin host."""
+    if isinstance(value, Mapping):
+        return value.items()
+    try:
+        return vars(value).items()
+    except TypeError as exc:
+        raise TypeError("axis_values must be a mapping or namespace") from exc
 
 class LoadingIntensityIntermediateExecutor(ExecutorBase):
     """Aggregate per-sensor loading intensity results over time windows."""
@@ -108,7 +119,7 @@ class LoadingIntensityIntermediateExecutor(ExecutorBase):
             band_accumulator = defaultdict(lambda: defaultdict(list))
             for res in results:  # LIComputedResult
                 for band in res.frequency_band_results:  # FrequencyBandResult
-                    for axis, value in band.axis_values.items():
+                    for axis, value in _items(band.axis_values):
                         band_accumulator[band.band_name][axis].append(value)
 
             per_sensor_bands[addr] = {}

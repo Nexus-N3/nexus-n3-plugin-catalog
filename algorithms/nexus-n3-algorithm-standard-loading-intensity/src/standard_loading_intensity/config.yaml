@@ -60,7 +60,7 @@ schedules:
   consolidated:
     enabled: true
     trigger: stop_event
-    source: real_time_results
+    source: intermediate_results
     aggregation:
       method: summary
       metrics:

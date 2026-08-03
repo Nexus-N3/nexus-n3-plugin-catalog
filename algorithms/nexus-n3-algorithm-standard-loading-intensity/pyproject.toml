@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nexus-n3-algorithm-standard-loading-intensity"
-version = "0.1.0"
+version = "0.1.2"
 description = "Standard Loading Intensity algorithm plugin for Nexus N3 OS"
 readme = "README.md"
 requires-python = ">=3.10"
