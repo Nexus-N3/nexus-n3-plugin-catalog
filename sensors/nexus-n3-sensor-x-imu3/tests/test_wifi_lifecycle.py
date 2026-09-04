@@ -190,6 +190,20 @@ def test_stream_joins_vendor_messages_by_timestamp(monkeypatch):
         assert sample.gyro == (4.0, 5.0, 6.0)
         assert sample.sample_type == "imu"
 
+        diagnostics = sensor.get_diagnostics_snapshot()
+        assert diagnostics["transport"] == "ximu3_udp"
+        assert diagnostics["connected"] is True
+        assert diagnostics["streaming"] is True
+        assert diagnostics["configured_sampling_rate_hz"] == 50
+        assert diagnostics["first_sample_timestamp_us"] == 1_000_000
+        assert diagnostics["last_sample_timestamp_us"] == 1_000_000
+        assert diagnostics["counters"]["inertial_messages"] == 2
+        assert diagnostics["counters"]["quaternion_messages"] == 2
+        assert diagnostics["counters"]["complete_samples"] == 1
+
+        sensor.reset_session_diagnostics()
+        assert sensor.get_diagnostics_snapshot()["counters"] == {}
+
         await sensor.stop_stream(None)
         inertial_callback(inertial)
         quaternion_callback(quaternion)

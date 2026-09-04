@@ -6,6 +6,7 @@ import ipaddress
 import json
 import logging
 import threading
+from collections import Counter
 
 from nexus_n3_plugin_sdk import SensorBase, SensorType
 import ximu3
@@ -54,9 +55,14 @@ class XImu3Sensor(SensorBase):
         self._identified_candidate_network: str | None = None
         self._callback_ids: list[int] = []
         self._sample_lock = threading.Lock()
+        self._diagnostics_lock = threading.Lock()
         self._pending_inertial: dict[int, tuple[tuple[float, ...], tuple[float, ...]]] = {}
         self._pending_quaternion: dict[int, tuple[float, ...]] = {}
         self._streaming = False
+        self._diagnostic_counts: Counter[str] = Counter()
+        self._first_sample_timestamp_us: int | None = None
+        self._last_sample_timestamp_us: int | None = None
+        self._configured_sampling_rate_hz: int | None = None
 
     def get_wifi_driver(self):
         """Expose this plugin as a driver for direct core development runs."""
@@ -71,12 +77,13 @@ class XImu3Sensor(SensorBase):
         return self._discover_connected_sync(network)
 
     def _discover_connected_sync(self, network) -> list[dict]:
-
+        self._increment_diagnostic("discovery_attempts")
         expected_network = ipaddress.ip_interface(network.cidr).network
         devices = []
         configs: dict[str, object] = {}
 
         announcements = ximu3.NetworkAnnouncement().get_messages_after_short_delay()
+        self._increment_diagnostic("announcements_seen", len(announcements))
         for announcement in announcements:
             if not str(announcement.device_name).casefold().startswith("x-imu3"):
                 continue
@@ -91,6 +98,7 @@ class XImu3Sensor(SensorBase):
             if not serial_number:
                 continue
             configs[serial_number] = announcement.to_udp_connection_config()
+            self._increment_diagnostic("announcements_accepted")
             devices.append(
                 {
                     "address": serial_number,
@@ -227,7 +235,7 @@ class XImu3Sensor(SensorBase):
         return self._connect_sensor_sync(target_device)
 
     def _connect_sensor_sync(self, device) -> bool:
-
+        self._increment_diagnostic("connect_attempts")
         serial_number = str(device.address)
         config = self._connection_configs.get(serial_number)
         if config is None:
@@ -240,10 +248,12 @@ class XImu3Sensor(SensorBase):
             if not response or str(response.serial_number) != serial_number:
                 raise RuntimeError(f"X-IMU3 {serial_number!r} did not answer UDP ping")
         except Exception:
+            self._increment_diagnostic("connect_errors")
             connection.close()
             raise
 
         self._connection = connection
+        self._increment_diagnostic("connect_successes")
         return True
 
     async def disconnect_sensor(self, sensor=None) -> bool:
@@ -253,7 +263,6 @@ class XImu3Sensor(SensorBase):
         return self._disconnect_sensor_sync()
 
     def _disconnect_sensor_sync(self) -> bool:
-
         if self._connection is None:
             return True
         self._streaming = False
@@ -263,6 +272,7 @@ class XImu3Sensor(SensorBase):
             self._connection.close()
         finally:
             self._connection = None
+        self._increment_diagnostic("disconnects")
         return True
 
     def consume_input(self, source_plugin_id: str, payload) -> bool:
@@ -282,6 +292,7 @@ class XImu3Sensor(SensorBase):
                 f"Unsupported X-IMU3 sampling rate {sampling_rate}; "
                 f"expected one of {sorted(MESSAGE_RATE_DIVISORS)}"
             ) from exc
+        self._configured_sampling_rate_hz = sampling_rate
 
         commands = [
             '{"ahrs_message_type":0}',
@@ -316,11 +327,13 @@ class XImu3Sensor(SensorBase):
         self._register_stream_callbacks()
         self._clear_pending_samples()
         self._streaming = True
+        self._increment_diagnostic("stream_starts")
         try:
             response = connection.send_command('{"udp_data_messages_enabled":true}')
             self._require_command_success([response], "enable UDP data messages")
         except Exception:
             self._streaming = False
+            self._increment_diagnostic("stream_start_errors")
             raise
 
     async def stop_stream(self, adapter):
@@ -330,6 +343,7 @@ class XImu3Sensor(SensorBase):
         if not self._streaming:
             return
         self._streaming = False
+        self._increment_diagnostic("stream_stops")
         self._clear_pending_samples()
         connection = self._require_connection()
         response = connection.send_command('{"udp_data_messages_enabled":false}')
@@ -372,17 +386,21 @@ class XImu3Sensor(SensorBase):
                 )
 
     def _on_inertial_message(self, message) -> None:
+        self._increment_diagnostic("inertial_messages")
         try:
             timestamp, accel, gyro = parse_inertial_message(message)
             self._join_sample(timestamp, accel=accel, gyro=gyro)
         except Exception:
+            self._increment_diagnostic("inertial_callback_errors")
             self.logger.exception("Failed to process an X-IMU3 inertial message")
 
     def _on_quaternion_message(self, message) -> None:
+        self._increment_diagnostic("quaternion_messages")
         try:
             timestamp, quat = parse_quaternion_message(message)
             self._join_sample(timestamp, quat=quat)
         except Exception:
+            self._increment_diagnostic("quaternion_callback_errors")
             self.logger.exception("Failed to process an X-IMU3 quaternion message")
 
     def _join_sample(self, timestamp: int, *, accel=None, gyro=None, quat=None) -> None:
@@ -402,9 +420,18 @@ class XImu3Sensor(SensorBase):
                     self._pending_inertial[timestamp] = (accel, gyro)
                 else:
                     sample = self._make_sample(timestamp, quaternion, accel, gyro)
-            self._trim_pending(self._pending_inertial)
-            self._trim_pending(self._pending_quaternion)
+            inertial_evictions = self._trim_pending(self._pending_inertial)
+            quaternion_evictions = self._trim_pending(self._pending_quaternion)
+        if inertial_evictions:
+            self._increment_diagnostic(
+                "pending_inertial_evictions", inertial_evictions
+            )
+        if quaternion_evictions:
+            self._increment_diagnostic(
+                "pending_quaternion_evictions", quaternion_evictions
+            )
         if sample is not None:
+            self._record_complete_sample(timestamp)
             self._emit("on_data", sample)
 
     def _make_sample(self, timestamp, quat, accel, gyro) -> IMUSample:
@@ -420,11 +447,88 @@ class XImu3Sensor(SensorBase):
         )
 
     @staticmethod
-    def _trim_pending(messages: dict) -> None:
+    def _trim_pending(messages: dict) -> int:
+        evictions = 0
         while len(messages) > MAX_PENDING_MESSAGES:
             messages.pop(next(iter(messages)))
+            evictions += 1
+        return evictions
 
     def _clear_pending_samples(self) -> None:
         with self._sample_lock:
+            inertial_count = len(self._pending_inertial)
+            quaternion_count = len(self._pending_quaternion)
             self._pending_inertial.clear()
             self._pending_quaternion.clear()
+        self._increment_diagnostic("pending_inertial_cleared", inertial_count)
+        self._increment_diagnostic("pending_quaternion_cleared", quaternion_count)
+
+    def reset_session_diagnostics(self) -> None:
+        """Reset counters without changing connection or stream state."""
+
+        with self._diagnostics_lock:
+            self._diagnostic_counts.clear()
+            self._first_sample_timestamp_us = None
+            self._last_sample_timestamp_us = None
+
+    def get_diagnostics_snapshot(self) -> dict:
+        """Return connection, message pairing, and stream-rate diagnostics."""
+
+        with self._diagnostics_lock:
+            counts = dict(self._diagnostic_counts)
+            first_timestamp = self._first_sample_timestamp_us
+            last_timestamp = self._last_sample_timestamp_us
+        with self._sample_lock:
+            pending_inertial = len(self._pending_inertial)
+            pending_quaternion = len(self._pending_quaternion)
+
+        complete_samples = counts.get("complete_samples", 0)
+        observed_rate = None
+        if (
+            complete_samples > 1
+            and first_timestamp is not None
+            and last_timestamp is not None
+            and last_timestamp > first_timestamp
+        ):
+            observed_rate = round(
+                (complete_samples - 1) * 1_000_000
+                / (last_timestamp - first_timestamp),
+                3,
+            )
+        return {
+            "transport": "ximu3_udp",
+            "address": self.address,
+            "connected": self._connection is not None,
+            "streaming": self._streaming,
+            "configured_sampling_rate_hz": self._configured_sampling_rate_hz,
+            "observed_sampling_rate_hz": observed_rate,
+            "first_sample_timestamp_us": first_timestamp,
+            "last_sample_timestamp_us": last_timestamp,
+            "pending_inertial_messages": pending_inertial,
+            "pending_quaternion_messages": pending_quaternion,
+            "counters": counts,
+        }
+
+    def _increment_diagnostic(self, name: str, amount: int = 1) -> None:
+        if not amount:
+            return
+        with self._diagnostics_lock:
+            self._diagnostic_counts[name] += amount
+
+    def _record_complete_sample(self, timestamp: int) -> None:
+        with self._diagnostics_lock:
+            previous = self._last_sample_timestamp_us
+            self._diagnostic_counts["complete_samples"] += 1
+            if self._first_sample_timestamp_us is None:
+                self._first_sample_timestamp_us = timestamp
+            if previous is not None:
+                delta = timestamp - previous
+                if delta <= 0:
+                    self._diagnostic_counts["out_of_order_samples"] += 1
+                elif self._configured_sampling_rate_hz:
+                    expected = 1_000_000 / self._configured_sampling_rate_hz
+                    if delta > expected * 1.5:
+                        missing = max(round(delta / expected) - 1, 1)
+                        self._diagnostic_counts["timestamp_gap_events"] += 1
+                        self._diagnostic_counts["estimated_missing_samples"] += missing
+            self._last_sample_timestamp_us = timestamp

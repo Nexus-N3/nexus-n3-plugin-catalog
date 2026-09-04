@@ -14,6 +14,12 @@ degrees/s. The default rate is 50 Hz; all inertial/AHRS rates exposed by the
 vendor settings are supported. Start and stop use the runtime
 `udp_data_messages_enabled` command and do not save that setting to flash.
 
+Session diagnostics report inertial and quaternion message counts, complete
+paired samples, pending and evicted message halves, callback errors, timestamp
+gaps and estimated missing samples, plus configured and observed sample rates.
+Core retrieves and resets these counters through the optional isolated-plugin
+diagnostics RPC.
+
 ## Development
 
 Install the SDK and CLI from the local tooling repo, then build this plugin:
