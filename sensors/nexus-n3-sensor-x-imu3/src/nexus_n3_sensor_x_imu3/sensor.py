@@ -77,6 +77,7 @@ class XImu3Sensor(SensorBase):
         return self._discover_connected_sync(network)
 
     def _discover_connected_sync(self, network) -> list[dict]:
+        """Discover and cache vendor UDP configurations on one subnet."""
         self._increment_diagnostic("discovery_attempts")
         expected_network = ipaddress.ip_interface(network.cidr).network
         devices = []
@@ -218,6 +219,7 @@ class XImu3Sensor(SensorBase):
 
     @staticmethod
     def _require_command_success(responses, operation: str) -> None:
+        """Raise when any vendor command response reports a failure."""
         if responses is None:
             raise RuntimeError(f"X-IMU3 returned no responses while trying to {operation}")
         for response in responses:
@@ -235,6 +237,7 @@ class XImu3Sensor(SensorBase):
         return self._connect_sensor_sync(target_device)
 
     def _connect_sensor_sync(self, device) -> bool:
+        """Open and ping the cached vendor UDP configuration."""
         self._increment_diagnostic("connect_attempts")
         serial_number = str(device.address)
         config = self._connection_configs.get(serial_number)
@@ -263,6 +266,7 @@ class XImu3Sensor(SensorBase):
         return self._disconnect_sensor_sync()
 
     def _disconnect_sensor_sync(self) -> bool:
+        """Remove callbacks and close the active vendor connection."""
         if self._connection is None:
             return True
         self._streaming = False
@@ -350,11 +354,13 @@ class XImu3Sensor(SensorBase):
         self._require_command_success([response], "disable UDP data messages")
 
     def _require_connection(self):
+        """Return the active vendor connection or reject the operation."""
         if self._connection is None:
             raise RuntimeError("X-IMU3 is not connected")
         return self._connection
 
     def _register_stream_callbacks(self) -> None:
+        """Register inertial and quaternion callbacks exactly once."""
         if self._callback_ids:
             return
         connection = self._require_connection()
@@ -373,6 +379,7 @@ class XImu3Sensor(SensorBase):
         self._callback_ids = callback_ids
 
     def _remove_stream_callbacks(self) -> None:
+        """Best-effort remove all callbacks from the vendor connection."""
         connection = self._connection
         callback_ids, self._callback_ids = self._callback_ids, []
         if connection is None:
@@ -386,6 +393,7 @@ class XImu3Sensor(SensorBase):
                 )
 
     def _on_inertial_message(self, message) -> None:
+        """Parse and join one vendor inertial callback message."""
         self._increment_diagnostic("inertial_messages")
         try:
             timestamp, accel, gyro = parse_inertial_message(message)
@@ -395,6 +403,7 @@ class XImu3Sensor(SensorBase):
             self.logger.exception("Failed to process an X-IMU3 inertial message")
 
     def _on_quaternion_message(self, message) -> None:
+        """Parse and join one vendor quaternion callback message."""
         self._increment_diagnostic("quaternion_messages")
         try:
             timestamp, quat = parse_quaternion_message(message)
@@ -404,6 +413,7 @@ class XImu3Sensor(SensorBase):
             self.logger.exception("Failed to process an X-IMU3 quaternion message")
 
     def _join_sample(self, timestamp: int, *, accel=None, gyro=None, quat=None) -> None:
+        """Join inertial and quaternion halves by device timestamp."""
         sample = None
         with self._sample_lock:
             if not self._streaming:
@@ -435,6 +445,7 @@ class XImu3Sensor(SensorBase):
             self._emit("on_data", sample)
 
     def _make_sample(self, timestamp, quat, accel, gyro) -> IMUSample:
+        """Construct a canonical SDK IMU sample from paired values."""
         return IMUSample(
             timestamp=timestamp,
             sensor_type=self.name,
@@ -448,6 +459,7 @@ class XImu3Sensor(SensorBase):
 
     @staticmethod
     def _trim_pending(messages: dict) -> int:
+        """Bound an unmatched-message map and return its eviction count."""
         evictions = 0
         while len(messages) > MAX_PENDING_MESSAGES:
             messages.pop(next(iter(messages)))
@@ -455,6 +467,7 @@ class XImu3Sensor(SensorBase):
         return evictions
 
     def _clear_pending_samples(self) -> None:
+        """Clear unmatched halves and account for discarded messages."""
         with self._sample_lock:
             inertial_count = len(self._pending_inertial)
             quaternion_count = len(self._pending_quaternion)
@@ -510,12 +523,14 @@ class XImu3Sensor(SensorBase):
         }
 
     def _increment_diagnostic(self, name: str, amount: int = 1) -> None:
+        """Increment one thread-safe plugin diagnostic counter."""
         if not amount:
             return
         with self._diagnostics_lock:
             self._diagnostic_counts[name] += amount
 
     def _record_complete_sample(self, timestamp: int) -> None:
+        """Record sample cadence and infer missing or reordered timestamps."""
         with self._diagnostics_lock:
             previous = self._last_sample_timestamp_us
             self._diagnostic_counts["complete_samples"] += 1
