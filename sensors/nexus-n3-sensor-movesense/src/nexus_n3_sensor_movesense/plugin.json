@@ -8,6 +8,6 @@
   "entry_point": "nexus_n3_sensor_movesense.sensor:MovesenseSensor",
   "spec_path": "nexus_n3_sensor_movesense/MovesenseSpec.yaml",
   "sdk_version": "0.1.0",
-  "min_nexus_n3_core_version": "0.0.0",
+  "min_nexus_n3_core_version": "0.1.12",
   "supports_consumed_input": false
 }
