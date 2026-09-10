@@ -174,10 +174,10 @@ class Core2Sensor(SensorBase):
     def on_data_packet(self, sender, packet: bytes):
         """Parse and emit CORE 2 measurement samples."""
 
-        # The CORE Body Temperature characteristic does not contain a
-        # device timestamp. Capture host receipt time immediately on
-        # entry so Nexus has the closest available timestamp to the BLE
-        # notification arrival.
+        # The CORE Body Temperature characteristic does not provide a
+        # device timestamp. Populate the sample timestamp from host wall
+        # clock as a best-effort metric timestamp.
+
         timestamp = int(time.time() * 1000)
 
         try:
