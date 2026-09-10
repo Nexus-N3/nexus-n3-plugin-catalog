@@ -13,7 +13,7 @@ from nexus_n3_sensor_movesense.parser import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-BLE_TOOLING_ROOT = REPO_ROOT / "nexus-n3-ble" / "nexus-n3-ble-tooling"
+BLE_TOOLING_ROOT = REPO_ROOT / "nexus-n3-ble-tooling"
 
 if str(BLE_TOOLING_ROOT) not in sys.path:
     sys.path.insert(0, str(BLE_TOOLING_ROOT))

@@ -6,6 +6,7 @@ import ipaddress
 import json
 import logging
 import threading
+import time
 from collections import Counter
 
 from nexus_n3_plugin_sdk import SensorBase, SensorType
@@ -56,8 +57,11 @@ class XImu3Sensor(SensorBase):
         self._callback_ids: list[int] = []
         self._sample_lock = threading.Lock()
         self._diagnostics_lock = threading.Lock()
-        self._pending_inertial: dict[int, tuple[tuple[float, ...], tuple[float, ...]]] = {}
-        self._pending_quaternion: dict[int, tuple[float, ...]] = {}
+        self._pending_inertial: dict[
+            int,
+            tuple[tuple[float, ...], tuple[float, ...], int],
+        ] = {}
+        self._pending_quaternion: dict[int, tuple[tuple[float, ...], int]] = {}
         self._streaming = False
         self._diagnostic_counts: Counter[str] = Counter()
         self._first_sample_timestamp_us: int | None = None
@@ -394,42 +398,79 @@ class XImu3Sensor(SensorBase):
 
     def _on_inertial_message(self, message) -> None:
         """Parse and join one vendor inertial callback message."""
+        receive_monotonic_ns = time.monotonic_ns()
         self._increment_diagnostic("inertial_messages")
         try:
             timestamp, accel, gyro = parse_inertial_message(message)
-            self._join_sample(timestamp, accel=accel, gyro=gyro)
+            self._join_sample(
+                timestamp,
+                receive_monotonic_ns=receive_monotonic_ns,
+                accel=accel,
+                gyro=gyro,
+            )
         except Exception:
             self._increment_diagnostic("inertial_callback_errors")
             self.logger.exception("Failed to process an X-IMU3 inertial message")
 
     def _on_quaternion_message(self, message) -> None:
         """Parse and join one vendor quaternion callback message."""
+        receive_monotonic_ns = time.monotonic_ns()
         self._increment_diagnostic("quaternion_messages")
         try:
             timestamp, quat = parse_quaternion_message(message)
-            self._join_sample(timestamp, quat=quat)
+            self._join_sample(
+                timestamp,
+                receive_monotonic_ns=receive_monotonic_ns,
+                quat=quat,
+            )
         except Exception:
             self._increment_diagnostic("quaternion_callback_errors")
             self.logger.exception("Failed to process an X-IMU3 quaternion message")
 
-    def _join_sample(self, timestamp: int, *, accel=None, gyro=None, quat=None) -> None:
+    def _join_sample(
+        self,
+        timestamp: int,
+        *,
+        receive_monotonic_ns: int,
+        accel=None,
+        gyro=None,
+        quat=None,
+    ) -> None:
         """Join inertial and quaternion halves by device timestamp."""
         sample = None
+        host_receive_monotonic_ns = None
         with self._sample_lock:
             if not self._streaming:
                 return
             if quat is not None:
                 inertial = self._pending_inertial.pop(timestamp, None)
                 if inertial is None:
-                    self._pending_quaternion[timestamp] = quat
+                    self._pending_quaternion[timestamp] = (
+                        quat,
+                        receive_monotonic_ns,
+                    )
                 else:
-                    sample = self._make_sample(timestamp, quat, *inertial)
+                    accel, gyro, inertial_receive_ns = inertial
+                    sample = self._make_sample(timestamp, quat, accel, gyro)
+                    host_receive_monotonic_ns = max(
+                        receive_monotonic_ns,
+                        inertial_receive_ns,
+                    )
             else:
                 quaternion = self._pending_quaternion.pop(timestamp, None)
                 if quaternion is None:
-                    self._pending_inertial[timestamp] = (accel, gyro)
+                    self._pending_inertial[timestamp] = (
+                        accel,
+                        gyro,
+                        receive_monotonic_ns,
+                    )
                 else:
-                    sample = self._make_sample(timestamp, quaternion, accel, gyro)
+                    quat, quaternion_receive_ns = quaternion
+                    sample = self._make_sample(timestamp, quat, accel, gyro)
+                    host_receive_monotonic_ns = max(
+                        receive_monotonic_ns,
+                        quaternion_receive_ns,
+                    )
             inertial_evictions = self._trim_pending(self._pending_inertial)
             quaternion_evictions = self._trim_pending(self._pending_quaternion)
         if inertial_evictions:
@@ -441,6 +482,11 @@ class XImu3Sensor(SensorBase):
                 "pending_quaternion_evictions", quaternion_evictions
             )
         if sample is not None:
+            object.__setattr__(
+                sample,
+                "_nexus_timing",
+                {"host_receive_monotonic_ns": host_receive_monotonic_ns},
+            )
             self._record_complete_sample(timestamp)
             self._emit("on_data", sample)
 

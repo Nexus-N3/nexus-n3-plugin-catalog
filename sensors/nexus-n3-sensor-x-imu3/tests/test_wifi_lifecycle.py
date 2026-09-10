@@ -140,6 +140,8 @@ def test_stream_joins_vendor_messages_by_timestamp(monkeypatch):
     sensor.location = "DEFAULT"
     emitted = []
     sensor.register_listener("on_data", emitted.append)
+    receive_times = iter((100, 200, 300, 400, 500, 600))
+    monkeypatch.setattr(sensor_module.time, "monotonic_ns", lambda: next(receive_times))
 
     async def scenario():
         devices = await sensor.discover_connected(
@@ -151,8 +153,8 @@ def test_stream_joins_vendor_messages_by_timestamp(monkeypatch):
         await sensor.setup(None)
         assert connection.commands == [
             '{"ahrs_message_type":0}',
-            '{"inertial_message_rate_divisor":8}',
-            '{"ahrs_message_rate_divisor":8}',
+            '{"inertial_message_rate_divisor":4}',
+            '{"ahrs_message_rate_divisor":4}',
         ]
         inertial_callback = connection.callbacks["inertial"][1]
         quaternion_callback = connection.callbacks["quaternion"][1]
@@ -184,17 +186,18 @@ def test_stream_joins_vendor_messages_by_timestamp(monkeypatch):
         assert len(emitted) == 1
         sample = emitted[0]
         assert sample.timestamp == 1_000_000
-        assert sample.sampling_rate == 50
+        assert sample.sampling_rate == 100
         assert sample.quat == (1.0, 0.1, 0.2, 0.3)
         assert sample.accel == pytest.approx((9.80665, 19.6133, 29.41995))
         assert sample.gyro == (4.0, 5.0, 6.0)
         assert sample.sample_type == "imu"
+        assert sample._nexus_timing == {"host_receive_monotonic_ns": 400}
 
         diagnostics = sensor.get_diagnostics_snapshot()
         assert diagnostics["transport"] == "ximu3_udp"
         assert diagnostics["connected"] is True
         assert diagnostics["streaming"] is True
-        assert diagnostics["configured_sampling_rate_hz"] == 50
+        assert diagnostics["configured_sampling_rate_hz"] == 100
         assert diagnostics["first_sample_timestamp_us"] == 1_000_000
         assert diagnostics["last_sample_timestamp_us"] == 1_000_000
         assert diagnostics["counters"]["inertial_messages"] == 2
