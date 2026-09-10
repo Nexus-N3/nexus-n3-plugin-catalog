@@ -26,8 +26,10 @@ data_streams:
     sample_type: ECGSample
   hr:
     sample_type: HRSample
+    timestamp_source: "host_estimate"
   temp:
     sample_type: TempSample
+    timestamp_source: "host_estimate"
 
 locations:
   supported:

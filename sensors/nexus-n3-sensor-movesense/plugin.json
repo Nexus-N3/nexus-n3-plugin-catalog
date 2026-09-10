@@ -1,13 +1,13 @@
 {
-  "plugin_id": "movesense",
+  "plugin_id": "core-2",
   "plugin_type": "sensor",
-  "display_name": "Movesense",
-  "version": "0.1.2",
-  "package_name": "nexus-n3-sensor-movesense",
-  "python_package": "nexus_n3_sensor_movesense",
-  "entry_point": "nexus_n3_sensor_movesense.sensor:MovesenseSensor",
-  "spec_path": "nexus_n3_sensor_movesense/MovesenseSpec.yaml",
+  "display_name": "Core2",
+  "version": "0.1.0",
+  "package_name": "nexus-n3-sensor-core-2",
+  "python_package": "nexus_n3_sensor_core_2",
+  "entry_point": "nexus_n3_sensor_core_2.sensor:Core2Sensor",
+  "spec_path": "nexus_n3_sensor_core_2/Core2Spec.yaml",
   "sdk_version": "0.1.0",
-  "min_nexus_n3_core_version": "0.0.0",
+  "min_nexus_n3_core_version": "0.1.13",
   "supports_consumed_input": false
 }
