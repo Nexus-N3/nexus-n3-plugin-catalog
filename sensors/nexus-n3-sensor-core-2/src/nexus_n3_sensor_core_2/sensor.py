@@ -22,12 +22,20 @@ class Core2Sensor(SensorBase):
         self.logger = logging.getLogger(self.sensor_type.local_name)
 
         spec = self.load_raw_spec()
+        self._data_stream_specs = spec.get("data_streams", {})
         super().__init__(self.sensor_type, spec)
 
         self.transport_spec = spec["transport"][self.adapter]
 
         self._measurement_notify_enabled = False
         self._battery_notify_enabled = False
+
+    def _declared_timestamp_source(self, stream: str) -> str | None:
+        return (
+            self._data_stream_specs
+            .get(stream.lower(), {})
+            .get("timestamp_source")
+        ) 
 
     def consume_input(self, source_plugin_id: str, payload) -> bool:
         """External input is not implemented yet."""
@@ -190,6 +198,9 @@ class Core2Sensor(SensorBase):
             address=self.address,
             location=self.location,
             sampling_rate=self.attributes.get("SAMPLING_RATE"),
+            declared_timestamp_source=self._declared_timestamp_source(
+                "temperature" 
+            ),
             **values,
         )
 

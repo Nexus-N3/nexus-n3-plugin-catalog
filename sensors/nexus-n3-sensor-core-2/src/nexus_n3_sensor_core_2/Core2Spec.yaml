@@ -22,6 +22,7 @@ attributes:
 data_streams:
   temperature:
     sample_type: Core2Sample
+    timestamp_source: "host_estimate"
 
 locations:
   supported:
