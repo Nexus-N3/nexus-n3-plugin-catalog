@@ -1,0 +1,48 @@
+sensor:
+  name: "X-IMU3"
+  type: "x_imu3"
+  adapter: "WIFI"
+
+capabilities:
+  - streaming
+  - provisioning
+  - identify
+
+events:
+  - on_data
+  - on_disconnected
+  - on_identify
+  - on_error
+
+attributes:
+  SAMPLING_RATE:
+    default: 100
+    supported: [1, 2, 4, 5, 8, 10, 16, 20, 25, 40, 50, 80, 100, 200, 400]
+    unit: "Hz"
+
+locations:
+  supported:
+    - HEAD
+    - LOWER_BACK
+    - LEFT_ANKLE
+    - RIGHT_ANKLE
+    - LEFT_THIGH
+    - RIGH_THIGH
+    - CHEST
+    - UPPER_BACK
+    - UPPER_RIGHT_ARM
+    - UPPER LEFT_ARM
+    - LEFT_WRIST
+    - RIGHT_WRIST
+
+computations:
+  - standard_loading_intensity
+  - generic_data_summary
+
+data_streams:
+  imu:
+    sample_type: IMUSample
+
+transport:
+  WIFI:
+    protocol: "ximu3-udp"

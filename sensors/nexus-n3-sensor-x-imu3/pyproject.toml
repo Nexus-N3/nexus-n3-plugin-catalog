@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nexus-n3-sensor-x-imu3"
+version = "0.1.4"
+description = "X Imu3 sensor plugin for Nexus N3 OS"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "nexus-n3-plugin-sdk>=0.1.0",
+  "ximu3>=1.8,<2",
+]
+
+[project.entry-points."nexus_n3.sensors"]
+x_imu3 = "nexus_n3_sensor_x_imu3.sensor:XImu3Sensor"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+nexus_n3_sensor_x_imu3 = ["*.yaml", "plugin.json"]

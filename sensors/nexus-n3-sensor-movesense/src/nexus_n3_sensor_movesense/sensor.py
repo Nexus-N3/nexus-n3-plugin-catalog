@@ -33,6 +33,7 @@ class MovesenseSensor(SensorBase):
         spec = self.load_raw_spec()
         super().__init__(self.sensor_type, spec)
         self.transport_spec = spec["transport"][self.adapter]
+        self._data_stream_specs = spec.get("data_streams", {})
         self._subscriptions = {}
         self._ecg_rate = ECG_SAMPLE_RATE_HZ
         self._hr_standard = bool(self.transport_spec.get("standard_hr"))
@@ -41,6 +42,13 @@ class MovesenseSensor(SensorBase):
         self._debug_packet_seen = False
         self._pending_gsp_info = {}
         self._next_gsp_ref = 200
+
+    def _declared_timestamp_source(self, stream: str) -> str | None:
+        return (
+            self._data_stream_specs
+            .get(stream.lower(), {})
+            .get("timestamp_source")
+        )
 
     def _get_streams(self) -> list[str]:
         streams = self.attributes.get("STREAMS") or ["ECG", "HR"]
@@ -212,6 +220,7 @@ class MovesenseSensor(SensorBase):
                     location=self.location,
                     sampling_rate=self._ecg_rate,
                     voltage=voltage,
+                    declared_timestamp_source=self._declared_timestamp_source("ECG")
                 )
                 self._emit("on_data", sample)
         elif stream == "HR":
@@ -228,6 +237,7 @@ class MovesenseSensor(SensorBase):
             if hr_value is None:
                 return
 
+
             sample = HRSample(
                 timestamp=int(time.time() * 1000),
                 sensor_type=self.name,
@@ -235,6 +245,7 @@ class MovesenseSensor(SensorBase):
                 location=self.location,
                 sampling_rate=None,
                 heart_rate=hr_value,
+                declared_timestamp_source=self._declared_timestamp_source("HR"),
             )
             self._emit("on_data", sample)
         elif stream == "TEMP":
@@ -253,6 +264,7 @@ class MovesenseSensor(SensorBase):
                 location=self.location,
                 sampling_rate=None,
                 temperature_c=temp_value,
+                declared_timestamp_source=self._declared_timestamp_source("TEMP"),
             )
             self._emit("on_data", sample)
 
