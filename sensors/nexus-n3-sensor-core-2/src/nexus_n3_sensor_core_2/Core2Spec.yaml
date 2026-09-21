@@ -1,0 +1,65 @@
+sensor:
+  name: "Core 2"
+  type: "core_2"
+  adapter: "BLE"
+
+discovery:
+  local_name_prefixes:
+    - "CORE"
+  service_uuids:
+    - "00002100-5B1E-4347-B07C-97B514DAE121"
+    - "00004200-F366-40B2-AC37-70CCE0AA83B1"
+
+aliases:
+  - "CORE"
+
+capabilities:
+  - streaming
+  - notify_battery
+
+events:
+  - on_data
+  - on_error
+  - on_disconnected
+  - on_battery
+
+attributes:
+  SAMPLING_RATE:
+    default: 1
+    supported: [1]
+    unit: "Hz"
+
+data_streams:
+  temperature:
+    sample_type: Core2Sample
+    timestamp_source: "host_estimate"
+
+inputs:
+  - name: hr
+    schema: hr
+
+locations:
+  supported:
+    - CHEST
+    - UPPER_ARM
+
+computations:
+  - generic_data_summary
+
+transport:
+  BLE:
+    services:
+      battery:
+        uuid: "0000180F-0000-1000-8000-00805F9B34FB"
+        characteristics:
+          battery_level:
+            uuid: "00002A19-0000-1000-8000-00805F9B34FB"
+
+      core_temperature:
+        uuid: "00002100-5B1E-4347-B07C-97B514DAE121"
+        characteristics:
+          measurement:
+            uuid: "00002101-5B1E-4347-B07C-97B514DAE121"
+
+          control_point:
+            uuid: "00002102-5B1E-4347-B07C-97B514DAE121"

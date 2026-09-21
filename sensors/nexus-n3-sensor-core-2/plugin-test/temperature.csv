@@ -1,0 +1,16 @@
+sample_type,sensor_type,address,location,sampling_rate,timestamp,flags,core_temperature,skin_temperature,core_reserved,quality_state_raw,core_data_quality,heart_rate_state,heart_rate,heat_strain_index
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978376730,55,37.0,33.5,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978377633,55,37.0,33.5,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978378736,55,37.0,33.52,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978379739,55,37.0,33.52,1778,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978380642,55,37.0,33.51,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978381746,55,37.0,33.52,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978382649,55,37.0,33.5,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978383652,55,37.0,33.5,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978384654,55,37.0,33.52,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978385758,55,37.0,33.5,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978386661,55,37.0,33.53,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978387663,55,37.0,33.52,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978388666,55,37.0,33.52,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978389668,55,37.0,33.51,1140,19,3,1,,0.0
+temperature,Core 2,DC:2B:8A:79:23:5C,,1,1789978390670,55,37.0,33.52,1140,19,3,1,,0.0
