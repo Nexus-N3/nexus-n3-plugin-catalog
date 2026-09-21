@@ -91,7 +91,14 @@ class Core2Sensor(SensorBase):
             self._pending_heart_rate = bpm
             return True
 
-        return await self._set_external_heart_rate(bpm)
+        try:
+            return await self._set_external_heart_rate(bpm)
+        except Exception:
+            self.logger.exception(
+                "Failed to forward external HR to CORE 2 at %s",
+                self.address,
+            )
+            return False
 
     async def setup(
         self,
@@ -148,7 +155,14 @@ class Core2Sensor(SensorBase):
         if self._pending_heart_rate is not None:
             pending = self._pending_heart_rate
             self._pending_heart_rate = None
-            await self._set_external_heart_rate(pending)
+
+            try:
+                await self._set_external_heart_rate(pending)
+            except Exception:
+                self.logger.exception(
+                    "Failed to apply pending external HR to CORE 2 at %s",
+                    self.address,
+                )
 
     async def _ensure_control_point_subscription(self):
         """Enable CORE Control Point procedure-complete indications."""
