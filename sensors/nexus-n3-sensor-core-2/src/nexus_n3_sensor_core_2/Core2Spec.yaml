@@ -34,6 +34,10 @@ data_streams:
     sample_type: Core2Sample
     timestamp_source: "host_estimate"
 
+inputs:
+  - name: hr
+    schema: hr
+
 locations:
   supported:
     - CHEST

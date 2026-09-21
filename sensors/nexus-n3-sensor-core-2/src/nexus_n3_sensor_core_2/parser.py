@@ -17,6 +17,14 @@ RFU_MASK = 0xC0
 TEMPERATURE_UNAVAILABLE = 0x7FFF
 HEAT_STRAIN_INDEX_UNAVAILABLE = 0xFF
 
+CONTROL_POINT_RESPONSE_OPCODE = 0x80
+CONTROL_POINT_EXTERNAL_HR_OPCODE = 0x13
+
+CONTROL_POINT_RESULT_SUCCESS = 0x01
+CONTROL_POINT_RESULT_OPCODE_NOT_SUPPORTED = 0x02
+CONTROL_POINT_RESULT_INVALID_PARAMETER = 0x03
+CONTROL_POINT_RESULT_OPERATION_FAILED = 0x04
+
 
 class DataView:
     """Tiny helper for little-endian binary parsing."""
@@ -37,6 +45,21 @@ class DataView:
     def get_int_16(self, start: int) -> int:
         return struct.unpack("<h", self._slice(start, 2))[0]
 
+
+def parse_control_point_response(packet: bytes) -> dict[str, int | bytes] | None:
+    """Parse a CORE Control Point procedure-complete indication."""
+
+    if not packet or len(packet) < 3:
+        return None
+
+    if packet[0] != CONTROL_POINT_RESPONSE_OPCODE:
+        return None
+
+    return {
+        "request_opcode": packet[1],
+        "result_code": packet[2],
+        "response_parameter": packet[3:],
+    }
 
 def parse_core_temperature_packet(
     packet: bytes,
