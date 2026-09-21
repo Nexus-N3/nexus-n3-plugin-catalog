@@ -14,7 +14,7 @@ FLAG_HEAT_STRAIN_INDEX = 0x20
 
 RFU_MASK = 0xC0
 
-CORE_TEMPERATURE_UNAVAILABLE = 0x7FFF
+TEMPERATURE_UNAVAILABLE = 0x7FFF
 HEAT_STRAIN_INDEX_UNAVAILABLE = 0xFF
 
 
@@ -66,7 +66,7 @@ def parse_core_temperature_packet(
     core_raw = view.get_int_16(offset)
     offset += 2
 
-    if core_raw == CORE_TEMPERATURE_UNAVAILABLE:
+    if core_raw == TEMPERATURE_UNAVAILABLE:
         core_temperature = None
     else:
         core_temperature = core_raw / 100.0
@@ -78,6 +78,7 @@ def parse_core_temperature_packet(
 
     skin_temperature = None
     core_reserved = None
+    quality_state_raw = None
     core_data_quality = None
     heart_rate_state = None
     heart_rate = None
@@ -91,12 +92,15 @@ def parse_core_temperature_packet(
         skin_raw = view.get_int_16(offset)
         offset += 2
 
-        skin_temperature = skin_raw / 100.0
+        if skin_raw == TEMPERATURE_UNAVAILABLE:
+            skin_temperature = None
+        else:
+            skin_temperature = skin_raw / 100.0
 
-        if temperature_is_fahrenheit:
-            skin_temperature = _fahrenheit_to_celsius(
-                skin_temperature
-            )
+            if temperature_is_fahrenheit:
+                skin_temperature = _fahrenheit_to_celsius(
+                    skin_temperature
+                )
 
     # Optional CORE reserved value.
     if flags & FLAG_CORE_RESERVED:
@@ -113,6 +117,7 @@ def parse_core_temperature_packet(
 
         quality_state = view.get_uint_8(offset)
         offset += 1
+        quality_state_raw = quality_state
 
         quality = quality_state & 0x07
         state = (quality_state >> 4) & 0x03
@@ -145,14 +150,22 @@ def parse_core_temperature_packet(
         if hsi_raw != HEAT_STRAIN_INDEX_UNAVAILABLE:
             heat_strain_index = hsi_raw / 10.0
 
-    # The payload length must match the fields declared by the flags.
-    if offset != len(packet):
-        return None
+    # Some CORE 2 firmware appends one byte in the HSI position even when
+    # FLAG_HEAT_STRAIN_INDEX is clear. The flag remains authoritative, so the
+    # byte is tolerated but is not exposed as a measurement.
+    remaining = len(packet) - offset
+    if remaining:
+        if not (flags & FLAG_HEAT_STRAIN_INDEX) and remaining == 1:
+            pass
+        else:
+            return None
 
     return {
+        "flags": flags,
         "core_temperature": core_temperature,
         "skin_temperature": skin_temperature,
         "core_reserved": core_reserved,
+        "quality_state_raw": quality_state_raw,
         "core_data_quality": core_data_quality,
         "heart_rate_state": heart_rate_state,
         "heart_rate": heart_rate,

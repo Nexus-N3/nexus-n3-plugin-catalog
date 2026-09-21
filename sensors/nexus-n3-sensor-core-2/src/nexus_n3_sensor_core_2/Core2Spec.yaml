@@ -3,6 +3,16 @@ sensor:
   type: "core_2"
   adapter: "BLE"
 
+discovery:
+  local_name_prefixes:
+    - "CORE"
+  service_uuids:
+    - "00002100-5B1E-4347-B07C-97B514DAE121"
+    - "00004200-F366-40B2-AC37-70CCE0AA83B1"
+
+aliases:
+  - "CORE"
+
 capabilities:
   - streaming
   - notify_battery

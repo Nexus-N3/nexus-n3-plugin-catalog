@@ -28,7 +28,6 @@ class Core2Sensor(SensorBase):
         self.transport_spec = spec["transport"][self.adapter]
 
         self._measurement_notify_enabled = False
-        self._battery_notify_enabled = False
 
     def _declared_timestamp_source(self, stream: str) -> str | None:
         return (
@@ -55,25 +54,9 @@ class Core2Sensor(SensorBase):
                 ["characteristics"]["battery_level"]["uuid"]
             )
 
-            # Battery Level notifications are optional in the standard
-            # BLE Battery Service. Try to enable them, but do not fail
-            # sensor setup if this CORE firmware only supports reads.
-            try:
-                await adapter.set_notify_callback(
-                    self.transport_client,
-                    battery_uuid,
-                    self.on_battery,
-                )
-                self._battery_notify_enabled = True
-            except Exception:
-                self.logger.info(
-                    "Battery notifications are not available for %s; "
-                    "using battery read only",
-                    self.address,
-                )
-
-            # Always perform an initial read so Nexus receives the
-            # current battery state immediately.
+            # CORE battery state is read once during setup. Keeping battery
+            # read-only ensures the measurement characteristic owns the
+            # gateway's binary notification stream.
             try:
                 batt = await adapter.read(
                     self.transport_client,
@@ -116,14 +99,17 @@ class Core2Sensor(SensorBase):
             ["characteristics"]["measurement"]["uuid"]
         )
 
-        if (
+        unset_notify = getattr(adapter, "unset_notify_callback", None)
+        if callable(unset_notify):
+            await unset_notify(
+                self.transport_client,
+                measurement_uuid,
+            )
+        elif (
             hasattr(adapter, "execute")
             and hasattr(self.transport_client, "stop_notify")
         ):
-            await adapter.execute(
-                self.transport_client.stop_notify,
-                measurement_uuid,
-            )
+            await adapter.execute(self.transport_client.stop_notify, measurement_uuid)
 
         self._measurement_notify_enabled = False
 
@@ -141,6 +127,9 @@ class Core2Sensor(SensorBase):
             byteorder="little",
             signed=False,
         )
+
+        if level > 100:
+            raise ValueError(f"battery level out of range: {level}")
 
         return BatteryStatus(level, False)
 
