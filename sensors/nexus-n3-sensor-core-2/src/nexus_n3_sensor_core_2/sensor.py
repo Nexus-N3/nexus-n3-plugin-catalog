@@ -182,6 +182,7 @@ class Core2Sensor(SensorBase):
             self.transport_client,
             control_point_uuid,
             self.on_control_point_packet,
+            indicate=True,
         )
 
         self._control_point_notify_enabled = True
