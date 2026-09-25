@@ -2,7 +2,7 @@
   "plugin_id": "core-2",
   "plugin_type": "sensor",
   "display_name": "Core 2",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "package_name": "nexus-n3-sensor-core-2",
   "python_package": "nexus_n3_sensor_core_2",
   "entry_point": "nexus_n3_sensor_core_2.sensor:Core2Sensor",

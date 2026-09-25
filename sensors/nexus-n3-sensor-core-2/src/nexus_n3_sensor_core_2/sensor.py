@@ -45,6 +45,7 @@ class Core2Sensor(SensorBase):
         self._control_point_response = None
 
         self._external_hr_active = False
+        self._external_hr_forwarding_enabled = False
         self._pending_heart_rate = None
 
     def _declared_timestamp_source(self, stream: str) -> str | None:
@@ -87,7 +88,7 @@ class Core2Sensor(SensorBase):
 
         # A source can begin streaming before CORE depending on start order.
         # Preserve the latest value and apply it once CORE is ready.
-        if not self._measurement_notify_enabled:
+        if not self._external_hr_forwarding_enabled:
             self._pending_heart_rate = bpm
             return True
 
@@ -151,6 +152,7 @@ class Core2Sensor(SensorBase):
         )
 
         self._measurement_notify_enabled = True
+        self._external_hr_forwarding_enabled = True
 
         if self._pending_heart_rate is not None:
             pending = self._pending_heart_rate
@@ -281,6 +283,8 @@ class Core2Sensor(SensorBase):
 
     async def stop_stream(self, adapter):
         """Stop CORE 2 live measurement notifications."""
+
+        self._external_hr_forwarding_enabled = False
 
         if not self._measurement_notify_enabled:
             return
