@@ -48,13 +48,22 @@ class PassThroughAlgorithm(AlgorithmBase):
         self.max_interval_ms = int(params.get("max_interval_ms", int(buffer_seconds * 1000)))
 
         self._buffer = []
-        self._last_emit = time.monotonic()
+        #self._last_emit = time.monotonic()
+        self._window_start = None
 
     def on_sample(self, sample):
+        now = time.monotonic()
+
+        if not self._buffer:
+            self._window_start = now
+
         self._buffer.append(sample)
 
-        now = time.monotonic()
-        elapsed_ms = (now - self._last_emit) * 1000
+        elapsed_ms = (
+            (now - self._window_start) * 1000
+            if self._window_start is not None
+            else 0
+        )
 
         if len(self._buffer) >= self.batch_size or elapsed_ms >= self.max_interval_ms:
             payload = [_serialize(s) for s in self._buffer]
@@ -67,4 +76,4 @@ class PassThroughAlgorithm(AlgorithmBase):
             )
             self.emit_result(result)
             self._buffer.clear()
-            self._last_emit = now
+        self._window_start = None

@@ -2,7 +2,7 @@
   "plugin_id": "pass-through",
   "plugin_type": "algorithm",
   "display_name": "Pass Through",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "package_name": "nexus-n3-algorithm-pass-through",
   "python_package": "pass_through",
   "entry_point": "pass_through.core:PassThroughAlgorithm",
