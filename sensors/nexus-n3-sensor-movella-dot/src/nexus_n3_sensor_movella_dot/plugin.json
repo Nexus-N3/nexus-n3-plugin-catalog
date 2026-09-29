@@ -2,7 +2,7 @@
   "plugin_id": "movella-dot",
   "plugin_type": "sensor",
   "display_name": "Movella DOT",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "package_name": "nexus-n3-sensor-movella-dot",
   "python_package": "nexus_n3_sensor_movella_dot",
   "entry_point": "nexus_n3_sensor_movella_dot.sensor:MovellaDotSensor",

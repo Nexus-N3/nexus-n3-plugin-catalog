@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nexus-n3-sensor-movella-dot"
-version = "0.1.0"
+version = "0.1.1"
 description = "Movella DOT sensor plugin for Nexus N3 OS"
 readme = "README.md"
 requires-python = ">=3.10"
