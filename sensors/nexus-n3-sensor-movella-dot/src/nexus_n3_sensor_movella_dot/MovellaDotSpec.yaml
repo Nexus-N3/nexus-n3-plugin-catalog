@@ -37,6 +37,12 @@ locations:
     - RIGH_THIGH
     - CHEST
     - UPPER_BACK
+    - LOWER_BACK
+    - LEFT_WRIST
+    - RIGHT_WRIST
+    - UPPER_RIGHT_ARM
+    - UPPER_LEFT_ARM
+
 
 computations:
   - standard_loading_intensity
